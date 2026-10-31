@@ -66,11 +66,28 @@ button.ghost.danger{color:var(--danger)}
 .st-over{color:var(--danger)!important;font-weight:500}
 .st-soon{color:var(--ink)!important;font-weight:700}
 @media (max-width:420px){.cats li{grid-template-columns:90px 1fr auto}}
+.tabs{display:flex;gap:6px;margin:0 0 16px;position:sticky;top:0;background:var(--bg);padding:6px 0;z-index:5}
+.tabs button{flex:1;font:inherit;font-weight:500;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;padding:0 6px}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tabs button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:inherit;font-size:.9rem;min-height:36px;padding:0 12px;border-radius:18px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+form.lform{display:flex;gap:8px;align-items:stretch;margin-bottom:12px}
+form.lform button.add{width:auto;padding:0 18px}
+.lname{flex:1;text-align:left;font:inherit;background:none;border:0;color:var(--ink);min-height:44px;cursor:pointer;padding:0;overflow-wrap:anywhere}
+.lname.done{text-decoration:line-through;color:var(--muted)}
+.list li.lrow{gap:6px}
 </style>
 </head>
 <body>
 <main>
   <h1>Мой трекер</h1>
+  <nav class="tabs" role="tablist" aria-label="Разделы">
+    <button type="button" role="tab" id="tbAuto" aria-selected="true">Авто</button>
+    <button type="button" role="tab" id="tbBuy" aria-selected="false">Покупки</button>
+    <button type="button" role="tab" id="tbList" aria-selected="false">Список</button>
+  </nav>
+  <div id="tab-auto">
 
   <section class="carbar">
     <label>Автомобиль
@@ -205,6 +222,64 @@ button.ghost.danger{color:var(--danger)}
     <button type="button" class="ghost" id="tLoad">Загрузить как новый автомобиль</button>
     <p id="tMsg" class="hint" role="status"></p>
   </details>
+  </div>
+
+  <div id="tab-buy" hidden>
+    <label class="periodbar">Период
+      <select id="bPeriod"></select>
+    </label>
+    <div class="total"><small id="bTotalLabel">Всего потрачено</small><strong id="bTotal">0</strong><small id="bCount"></small></div>
+    <ul class="cats" id="bCats"></ul>
+
+    <form id="bForm">
+      <label class="wide">Что купили
+        <input id="bName" type="text" maxlength="60" required autocomplete="off" list="bNames" placeholder="например, хлеб">
+      </label>
+      <datalist id="bNames"></datalist>
+      <div class="wide chips" id="bChips"></div>
+      <label class="wide">Сумма
+        <input id="bAmount" type="number" inputmode="decimal" min="0" step="any" required placeholder="например, 1500">
+      </label>
+      <label>Категория
+        <select id="bCat"></select>
+      </label>
+      <label>Дата
+        <input id="bDate" type="date" required>
+      </label>
+      <label class="wide" id="bNewCatWrap" hidden>Название новой категории
+        <input id="bNewCat" type="text" maxlength="25" placeholder="например, Спорт">
+      </label>
+      <label class="wide">Где купили (необязательно)
+        <input id="bStore" type="text" maxlength="40" list="bStores" autocomplete="off" placeholder="например, Magnum">
+      </label>
+      <datalist id="bStores"></datalist>
+      <label class="wide">Заметка (необязательно)
+        <input id="bNote" type="text" maxlength="150" placeholder="например, по акции">
+      </label>
+      <button class="add" type="submit">Добавить покупку</button>
+      <p class="hint wide" id="bMsg" role="status"></p>
+    </form>
+
+    <h2>История покупок</h2>
+    <label class="periodbar">
+      <input id="bSearch" type="search" placeholder="Поиск по названию, магазину, заметке">
+    </label>
+    <ul class="list" id="bList"></ul>
+  </div>
+
+  <div id="tab-list" hidden>
+    <form id="lForm" class="lform">
+      <input id="lName" type="text" maxlength="120" required autocomplete="off" placeholder="Что купить (можно через запятую)">
+      <button class="add" type="submit">Добавить</button>
+    </form>
+    <div class="chips" id="lChips" style="margin-bottom:16px"></div>
+    <h2>К покупке</h2>
+    <ul class="list" id="lList"></ul>
+    <div class="carbtns">
+      <button type="button" class="ghost" id="lClear">Убрать купленные</button>
+    </div>
+    <p class="hint">Нажмите на пункт, чтобы вычеркнуть его. У вычеркнутого появится кнопка «Записать»: она откроет покупки с уже заполненным названием.</p>
+  </div>
 </main>
 
 <script>
@@ -669,5 +744,288 @@ button.ghost.danger{color:var(--danger)}
   render();
 })();
 </script>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  function ld(k,d){try{var v=JSON.parse(localStorage.getItem(k));return v==null?d:v;}catch(e){return d;}}
+  function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  var fmt=new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2});
+  var BKEY='shop-items-v1',CKEY='shop-cats-v1',LKEY='shop-list-v1',HKEY='shop-listhist-v1',TKEY='tracker-tab-v1',PKEY='shop-period-v1';
+  var DEFCATS=['Продукты','Одежда','Дом','Техника','Здоровье','Подарки','Транспорт','Развлечения','Другое'];
+  var MON=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  var buys=ld(BKEY,[]),custom=ld(CKEY,[]),list=ld(LKEY,[]),hist=ld(HKEY,[]);
+  if(!Array.isArray(buys))buys=[];
+  if(!Array.isArray(custom))custom=[];
+  if(!Array.isArray(list))list=[];
+  if(!Array.isArray(hist))hist=[];
+  function p2(n){return n<10?'0'+n:''+n;}
+  function today(){var d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());}
+  function dateRu(s){var a=String(s||'').split('-');return a.length===3?a[2]+'.'+a[1]+'.'+a[0]:'';}
+  function plural(n,a,b,c){var m=n%100,k=n%10;if(m>10&&m<20)return c;if(k===1)return a;if(k>1&&k<5)return b;return c;}
+  function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
+  function clear(n){while(n.firstChild)n.removeChild(n.firstChild);}
+  function low(s){return String(s||'').trim().toLowerCase();}
+
+  /* ---------- вкладки ---------- */
+  var tabs={auto:$('tab-auto'),buy:$('tab-buy'),list:$('tab-list')};
+  var tb={auto:$('tbAuto'),buy:$('tbBuy'),list:$('tbList')};
+  function show(t){
+    if(!tabs[t])t='auto';
+    for(var k in tabs){tabs[k].hidden=(k!==t);tb[k].setAttribute('aria-selected',k===t?'true':'false');}
+    sv(TKEY,t);
+    if(t==='buy')renderBuy();
+    if(t==='list')renderList();
+    window.scrollTo(0,0);
+  }
+  tb.auto.addEventListener('click',function(){show('auto');});
+  tb.buy.addEventListener('click',function(){show('buy');});
+  tb.list.addEventListener('click',function(){show('list');});
+  function updTab(){
+    var n=list.filter(function(x){return !x.done;}).length;
+    tb.list.textContent=n>0?'Список ('+n+')':'Список';
+  }
+
+  /* ---------- категории ---------- */
+  function allCats(){
+    var res=DEFCATS.slice(0,DEFCATS.length-1),seen={};
+    custom.forEach(function(c){res.push(c);});
+    res.push('Другое');
+    return res.filter(function(c){var k=low(c);if(seen[k])return false;seen[k]=1;return true;});
+  }
+  function fillCats(sel){
+    var cur=sel!=null?sel:$('bCat').value;
+    var s=$('bCat');clear(s);
+    allCats().forEach(function(c){var o=el('option',null,c);o.value=c;s.appendChild(o);});
+    var n=el('option',null,'＋ Новая категория…');n.value='__new';s.appendChild(n);
+    s.value=cur;
+    if(s.value!==cur)s.value='Продукты';
+    $('bNewCatWrap').hidden=(s.value!=='__new');
+  }
+  $('bCat').addEventListener('change',function(){
+    var isNew=$('bCat').value==='__new';
+    $('bNewCatWrap').hidden=!isNew;
+    $('bNewCat').required=isNew;
+    if(isNew)$('bNewCat').focus();
+  });
+
+  /* ---------- период ---------- */
+  var period=ld(PKEY,null);
+  function periodOf(d){return {y:'y:'+d.slice(0,4),m:'m:'+d.slice(0,7)};}
+  function periodLabel(v){
+    if(v==='all')return 'Всё время';
+    if(v.indexOf('y:')===0)return v.slice(2)+' год';
+    var a=v.slice(2).split('-');return MON[parseInt(a[1],10)-1]+' '+a[0];
+  }
+  function fillPeriod(){
+    var ys={},ms={},t=today();
+    ms[t.slice(0,7)]=1;ys[t.slice(0,4)]=1;
+    buys.forEach(function(b){if(b.date){ms[b.date.slice(0,7)]=1;ys[b.date.slice(0,4)]=1;}});
+    var vals=['all'];
+    Object.keys(ys).sort().reverse().forEach(function(y){vals.push('y:'+y);});
+    Object.keys(ms).sort().reverse().forEach(function(m){vals.push('m:'+m);});
+    if(!period||vals.indexOf(period)<0)period='m:'+t.slice(0,7);
+    var s=$('bPeriod');clear(s);
+    vals.forEach(function(v){var o=el('option',null,periodLabel(v));o.value=v;s.appendChild(o);});
+    s.value=period;
+  }
+  $('bPeriod').addEventListener('change',function(){period=$('bPeriod').value;sv(PKEY,period);renderBuy();});
+  function inPeriod(b){
+    if(!period||period==='all')return true;
+    var d=b.date||'';
+    if(period.indexOf('y:')===0)return d.slice(0,4)===period.slice(2);
+    return d.slice(0,7)===period.slice(2);
+  }
+  $('bSearch').addEventListener('input',renderBuy);
+
+  /* ---------- покупки ---------- */
+  function sorted(a){
+    return a.slice().sort(function(x,y){
+      if(x.date!==y.date)return x.date<y.date?1:-1;
+      return (y.id||0)-(x.id||0);
+    });
+  }
+  function lastByName(n){
+    var k=low(n),r=null;
+    sorted(buys).some(function(b){if(low(b.name)===k){r=b;return true;}return false;});
+    return r;
+  }
+  function autofill(force){
+    var b=lastByName($('bName').value);
+    if(!b)return;
+    if(force||$('bAmount').value==='')$('bAmount').value=b.amount;
+    if(b.cat){fillCats(b.cat);}
+    if(b.store&&$('bStore').value==='')$('bStore').value=b.store;
+  }
+  $('bName').addEventListener('change',function(){autofill(false);});
+  function renderChips(){
+    var c=$('bChips');clear(c);
+    var seen={},n=0;
+    sorted(buys).forEach(function(b){
+      var k=low(b.name);
+      if(!k||seen[k]||n>=8)return;
+      seen[k]=1;n++;
+      var x=el('button',null,b.name);x.type='button';
+      x.addEventListener('click',function(){
+        $('bName').value=b.name;autofill(true);$('bAmount').focus();$('bAmount').select();
+      });
+      c.appendChild(x);
+    });
+    var dn=$('bNames'),ds=$('bStores');clear(dn);clear(ds);
+    var sn={},ss={};
+    sorted(buys).forEach(function(b){
+      var k=low(b.name);
+      if(k&&!sn[k]&&Object.keys(sn).length<100){sn[k]=1;var o=el('option');o.value=b.name;dn.appendChild(o);}
+      var s=low(b.store);
+      if(s&&!ss[s]){ss[s]=1;var q=el('option');q.value=b.store;ds.appendChild(q);}
+    });
+  }
+  function renderBuy(){
+    fillPeriod();
+    renderChips();
+    var rows=sorted(buys).filter(inPeriod);
+    var total=0,by={};
+    rows.forEach(function(b){var a=+b.amount||0;total+=a;by[b.cat||'Другое']=(by[b.cat||'Другое']||0)+a;});
+    $('bTotal').textContent=fmt.format(total)+' ₸';
+    $('bTotalLabel').textContent=period==='all'?'Всего потрачено':'Потрачено: '+periodLabel(period);
+    $('bCount').textContent=rows.length+' '+plural(rows.length,'покупка','покупки','покупок');
+    var cu=$('bCats');clear(cu);
+    var names=Object.keys(by).sort(function(a,b){return by[b]-by[a];});
+    var max=names.length?by[names[0]]:0;
+    names.forEach(function(n){
+      var li=el('li');
+      li.appendChild(el('span',null,n));
+      var bar=el('div','bar'),i=el('i');i.style.width=(max>0?Math.max(2,Math.round(by[n]/max*100)):0)+'%';
+      bar.appendChild(i);li.appendChild(bar);
+      li.appendChild(el('b',null,fmt.format(by[n])+' ₸'));
+      cu.appendChild(li);
+    });
+    var q=low($('bSearch').value);
+    var vis=rows.filter(function(b){
+      if(!q)return true;
+      return (low(b.name)+' '+low(b.store)+' '+low(b.note)+' '+low(b.cat)).indexOf(q)>=0;
+    });
+    var ul=$('bList');clear(ul);
+    if(!vis.length){
+      var e=el('li','empty',buys.length?'Нет покупок за этот период.':'Покупок пока нет. Добавьте первую выше.');
+      ul.appendChild(e);return;
+    }
+    vis.forEach(function(b){
+      var li=el('li'),w=el('div','what');
+      w.appendChild(el('b',null,b.name));
+      var meta=[dateRu(b.date),b.cat];
+      if(b.store)meta.push(b.store);
+      if(b.note)meta.push(b.note);
+      w.appendChild(el('span',null,meta.join(' · ')));
+      li.appendChild(w);
+      var r=el('div');r.style.display='flex';r.style.alignItems='center';
+      r.appendChild(el('span','sum',fmt.format(b.amount)+' ₸'));
+      var d=el('button','del','✕');d.type='button';d.setAttribute('aria-label','Удалить покупку '+b.name);
+      d.addEventListener('click',function(){
+        if(!window.confirm('Удалить покупку «'+b.name+'»?'))return;
+        buys=buys.filter(function(x){return x.id!==b.id;});
+        sv(BKEY,buys);renderBuy();
+      });
+      r.appendChild(d);li.appendChild(r);ul.appendChild(li);
+    });
+  }
+  $('bForm').addEventListener('submit',function(ev){
+    ev.preventDefault();
+    var name=$('bName').value.trim(),amount=parseFloat($('bAmount').value),date=$('bDate').value,cat=$('bCat').value;
+    if(!name||isNaN(amount)||amount<0||!date)return;
+    if(cat==='__new'){
+      cat=$('bNewCat').value.trim();
+      if(!cat){$('bNewCat').focus();return;}
+      var exists=allCats().filter(function(c){return low(c)===low(cat);})[0];
+      if(exists){cat=exists;}else{custom.push(cat);sv(CKEY,custom);}
+    }
+    var item={id:Date.now(),name:name,amount:amount,date:date,cat:cat,store:$('bStore').value.trim(),note:$('bNote').value.trim()};
+    buys.push(item);sv(BKEY,buys);
+    var before=list.length;
+    list=list.filter(function(x){return low(x.name)!==low(name);});
+    if(list.length!==before)sv(LKEY,list);
+    updTab();
+    $('bMsg').textContent='Добавлено: '+name+', '+fmt.format(amount)+' ₸';
+    $('bName').value='';$('bAmount').value='';$('bNote').value='';$('bNewCat').value='';$('bNewCat').required=false;
+    fillCats(cat);
+    var pv=periodOf(date);
+    if(period!=='all'&&period!==pv.y&&period!==pv.m)period=pv.m;
+    renderBuy();
+    $('bName').focus();
+  });
+
+  /* ---------- список покупок ---------- */
+  function addToList(raw){
+    var parts=String(raw||'').split(/[,;\n]+/),added=false;
+    parts.forEach(function(p){
+      var n=p.trim();if(!n)return;
+      var dup=list.some(function(x){return !x.done&&low(x.name)===low(n);});
+      if(!dup){list.push({id:Date.now()+list.length,name:n,done:false});added=true;}
+      hist=hist.filter(function(h){return low(h)!==low(n);});hist.unshift(n);
+    });
+    hist=hist.slice(0,30);
+    sv(HKEY,hist);sv(LKEY,list);
+    return added;
+  }
+  function renderLChips(){
+    var c=$('lChips');clear(c);
+    var inList={};list.forEach(function(x){if(!x.done)inList[low(x.name)]=1;});
+    var seen={},n=0,src=hist.slice();
+    sorted(buys).forEach(function(b){src.push(b.name);});
+    src.forEach(function(s){
+      var k=low(s);
+      if(!k||seen[k]||inList[k]||n>=10)return;
+      seen[k]=1;n++;
+      var x=el('button',null,'+ '+s);x.type='button';
+      x.addEventListener('click',function(){addToList(s);renderList();});
+      c.appendChild(x);
+    });
+  }
+  function renderList(){
+    updTab();renderLChips();
+    var ul=$('lList');clear(ul);
+    if(!list.length){ul.appendChild(el('li','empty','Список пуст. Запишите, что нужно купить.'));return;}
+    var ordered=list.filter(function(x){return !x.done;}).concat(list.filter(function(x){return x.done;}));
+    ordered.forEach(function(it){
+      var li=el('li','lrow');
+      var b=el('button','lname'+(it.done?' done':''),(it.done?'✓ ':'')+it.name);b.type='button';
+      b.setAttribute('aria-pressed',it.done?'true':'false');
+      b.addEventListener('click',function(){it.done=!it.done;sv(LKEY,list);renderList();});
+      li.appendChild(b);
+      if(it.done){
+        var w=el('button','ghost','Записать');w.type='button';
+        w.addEventListener('click',function(){
+          show('buy');$('bName').value=it.name;autofill(true);$('bAmount').focus();
+        });
+        li.appendChild(w);
+      }
+      var d=el('button','del','✕');d.type='button';d.setAttribute('aria-label','Удалить из списка '+it.name);
+      d.addEventListener('click',function(){list=list.filter(function(x){return x.id!==it.id;});sv(LKEY,list);renderList();});
+      li.appendChild(d);
+      ul.appendChild(li);
+    });
+  }
+  $('lForm').addEventListener('submit',function(ev){
+    ev.preventDefault();
+    addToList($('lName').value);
+    $('lName').value='';
+    renderList();
+    $('lName').focus();
+  });
+  $('lClear').addEventListener('click',function(){
+    var n=list.filter(function(x){return x.done;}).length;
+    if(!n)return;
+    list=list.filter(function(x){return !x.done;});sv(LKEY,list);renderList();
+  });
+
+  /* ---------- запуск ---------- */
+  $('bDate').value=today();
+  fillCats('Продукты');
+  updTab();
+  var t0=ld(TKEY,'auto');
+  show(t0==='buy'||t0==='list'?t0:'auto');
+  window.scrollTo(0,0);
+})();
+</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){try{navigator.serviceWorker.register('sw.js').catch(function(){});}catch(e){}});}</script>
 </body>
 </html>
