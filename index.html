@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Мой автомобиль: расходы</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#e8ebed;--surface:#f6f7f8;--ink:#17212b;--muted:#5d6b78;--line:#cfd5da;--accent:#1f5fbf;--accent-ink:#fff;--danger:#b3261e;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#141a20;--surface:#1e262e;--ink:#e8edf1;--muted:#93a1ad;--line:#33404b;--accent:#6aa3f5;--accent-ink:#0b1623;--danger:#f2877f}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#141a20;--surface:#1e262e;--ink:#e8edf1;--muted:#93a1ad;--line:#33404b;--accent:#6aa3f5;--accent-ink:#0b1623;--danger:#f2877f}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.5rem;margin:8px 0 16px;font-weight:700}
+.total{background:var(--ink);color:var(--bg);border-radius:14px;padding:18px 20px;margin-bottom:16px}
+.total small{display:block;opacity:.75}
+.total strong{font-size:2.2rem;font-weight:700;line-height:1.2}
+.cats{margin:0 0 20px;padding:0;list-style:none}
+.cats li{display:grid;grid-template-columns:110px 1fr auto;gap:10px;align-items:center;padding:4px 0;font-size:.95rem}
+.bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+form{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+label{display:flex;flex-direction:column;font-size:.85rem;color:var(--muted);gap:4px}
+.wide{grid-column:1/-1}
+[hidden]{display:none!important}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
+input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button.add{grid-column:1/-1;font:inherit;font-weight:500;background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;min-height:48px;cursor:pointer}
+h2{font-size:1.1rem;margin:0 0 8px}
+.list{list-style:none;margin:0;padding:0}
+.list li{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}
+.list .what{min-width:0}
+.list .what b{display:block;font-weight:500}
+.list .what span{color:var(--muted);font-size:.85rem;overflow-wrap:anywhere}
+.list .sum{font-weight:700;white-space:nowrap}
+.del{font:inherit;background:none;border:0;color:var(--danger);cursor:pointer;min-width:44px;min-height:44px}
+.empty{color:var(--muted);padding:16px 0}
+.carbar{margin-bottom:16px}
+.periodbar{margin-bottom:12px}
+.prow{display:grid;grid-template-columns:1fr 110px 44px;gap:8px;margin:8px 0}
+.prow .del{padding:0}
+textarea{resize:vertical;display:block}
+details.transfer{margin-top:28px;border-top:1px solid var(--line);padding-top:8px}
+details.transfer summary{font-weight:500;cursor:pointer;min-height:44px;display:flex;align-items:center}
+.hint{color:var(--muted);font-size:.9rem;margin:4px 0 12px}
+.chk{flex-direction:row;align-items:center;gap:8px;margin-bottom:8px}
+.chk input{width:auto;min-height:0}
+details.transfer .carbtns{margin:8px 0}
+details.transfer textarea{margin:8px 0}
+.carbtns{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+button.ghost{font:inherit;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:10px;min-height:44px;padding:0 14px;cursor:pointer}
+button.ghost.danger{color:var(--danger)}
+.carbar form{margin:8px 0 0}
+.banner{border-color:var(--accent);border-width:2px}
+.banner b{font-weight:500}
+.iv{flex-direction:row;align-items:center;gap:6px;white-space:nowrap}
+.iv input{width:96px}
+.ivs{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.st-over{color:var(--danger)!important;font-weight:500}
+.st-soon{color:var(--ink)!important;font-weight:700}
+@media (max-width:420px){.cats li{grid-template-columns:90px 1fr auto}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Мой автомобиль: расходы</h1>
+
+  <section class="carbar">
+    <label>Автомобиль
+      <select id="car"></select>
+    </label>
+    <div class="carbtns">
+      <button type="button" class="ghost" id="carAdd">Добавить</button>
+      <button type="button" class="ghost" id="carRen">Переименовать</button>
+      <button type="button" class="ghost danger" id="carDel">Удалить</button>
+    </div>
+    <form id="carForm" hidden>
+      <label class="wide">Название
+        <input id="carName" type="text" maxlength="30" required placeholder="например, Toyota Camry">
+      </label>
+      <button class="add" type="submit">Сохранить</button>
+    </form>
+  </section>
+
+  <form id="kmBanner" class="banner" hidden>
+    <b class="wide" id="kmBannerText"></b>
+    <label class="wide">Пробег сейчас, км
+      <input id="kmNow" type="number" inputmode="numeric" min="0" step="1" required>
+    </label>
+    <button class="add" type="submit">Сохранить пробег</button>
+  </form>
+
+  <label class="periodbar">Период
+    <select id="period"></select>
+  </label>
+
+  <div class="total"><small id="totalLabel">Всего потрачено</small><strong id="total">0</strong><small id="odo"></small></div>
+  <ul class="cats" id="cats"></ul>
+
+  <form id="f">
+    <label class="wide">Что оплатили
+      <select id="cat">
+        <option>Топливо</option><option>Тех. обслуживание</option><option>Ремонт</option>
+      </select>
+    </label>
+    <label class="wide" id="subWrap" hidden>Вид обслуживания
+      <select id="sub">
+        <option>Замена масла и фильтра в двигателе</option>
+        <option>Замена воздушного фильтра</option>
+        <option>Замена салонного фильтра</option>
+        <option>Замена свечей зажигания</option>
+        <option>Замена тормозных колодок</option>
+        <option>Замена тормозной жидкости</option>
+        <option>Замена ГУР жидкости</option>
+        <option>Замена охлаждающей жидкости (антифриз)</option>
+        <option>Замена масла и фильтра АКПП</option>
+        <option>Замена масла редукторов</option>
+        <option>Замена масла раздаточной коробки</option>
+        <option>Шприцевание точек смазки</option>
+        <option>Шины и колёса</option>
+        <option>Аккумулятор</option>
+        <option>Другое</option>
+      </select>
+    </label>
+    <label class="wide" id="amountWrap">Сумма
+      <input id="amount" type="number" inputmode="decimal" min="0" step="any" placeholder="например, 15000" required>
+    </label>
+    <label class="wide" id="titleWrap" hidden><span id="titleLabel">Название или описание работы (необязательно)</span>
+      <input id="title" type="text" maxlength="60" placeholder="например, замена лампы ближнего света">
+    </label>
+    <div class="wide" id="partsBox" hidden>
+      <b id="partsTitle">Технические жидкости / Расходные материалы (необязательно)</b>
+      <div id="partRows"></div>
+      <button type="button" class="ghost" id="partAdd">Добавить запчасть</button>
+      <p class="hint" id="partsHint">Например: масло Shell Helix Ultra 5W-30, 4 л, 18 000 ₸; фильтр MD352626, 2 000 ₸. Если общую стоимость ниже оставить пустой, она посчитается по этим строкам.</p>
+    </div>
+    <label class="wide" id="partsWrap" hidden>Общая стоимость запасных частей и расходных материалов
+      <input id="parts" type="number" inputmode="decimal" min="0" step="any" placeholder="0">
+    </label>
+    <label class="wide" id="laborWrap" hidden>Стоимость ремонта/услуг
+      <input id="labor" type="number" inputmode="decimal" min="0" step="any" placeholder="0">
+    </label>
+    <label>Дата
+      <input id="date" type="date" required>
+    </label>
+    <label>Пробег, км
+      <input id="km" type="number" inputmode="numeric" min="0" step="1" placeholder="например, 84500">
+    </label>
+    <label class="wide"><span id="noteLabel">Заметка (необязательно)</span>
+      <input id="note" type="text" maxlength="150" placeholder="например, АЗС и марка бензина">
+    </label>
+    <button class="add" type="submit">Добавить расход</button>
+  </form>
+
+  <h2>Напоминания об обслуживании</h2>
+  <ul class="list" id="rem" style="margin-bottom:12px"></ul>
+  <div class="carbtns" style="margin-bottom:8px">
+    <button type="button" class="ghost" id="remAdd">Добавить своё напоминание</button>
+    <button type="button" class="ghost" id="tplSave">Сделать эти интервалы стандартными для новых авто</button>
+  </div>
+  <p class="hint" id="tplMsg" role="status" style="margin-bottom:24px"></p>
+  <form id="remForm" hidden>
+    <label class="wide">Название
+      <input id="remName" type="text" maxlength="40" required placeholder="например, замена ремня ГРМ">
+    </label>
+    <label>Каждые, км
+      <input id="remKm" type="number" inputmode="numeric" min="0" step="500" placeholder="км">
+    </label>
+    <label>или, мес.
+      <input id="remMo" type="number" inputmode="numeric" min="0" step="1" placeholder="мес.">
+    </label>
+    <label>Последний раз сделано
+      <input id="remDate" type="date">
+    </label>
+    <label>Пробег тогда, км
+      <input id="remLastKm" type="number" inputmode="numeric" min="0" step="1" placeholder="км">
+    </label>
+    <p class="hint wide">Дату и пробег можно не указывать: тогда отсчёт начнётся с первой записи с этим названием в форме расходов.</p>
+    <button class="add" type="submit">Создать напоминание</button>
+    <p class="hint wide" id="remMsg" role="status"></p>
+  </form>
+
+  <h2>История</h2>
+  <ul class="list" id="list"></ul>
+
+  <details class="transfer">
+    <summary>Передать данные другому человеку</summary>
+    <p class="hint">Если продали автомобиль: покажите покупателю историю текстом или отправьте код, который он загрузит в таком же трекере. Передаётся выбранный сверху автомобиль, топливо в историю текстом не попадает.</p>
+    <label class="chk"><input type="checkbox" id="withSums"> Показывать суммы</label>
+    <div class="carbtns">
+      <button type="button" class="ghost" id="tHist">История текстом</button>
+      <button type="button" class="ghost" id="tCode">Код для переноса</button>
+    </div>
+    <textarea id="tOut" rows="8" readonly hidden></textarea>
+    <button type="button" class="ghost" id="tCopy" hidden>Копировать</button>
+    <h2 style="margin-top:20px">Загрузить автомобиль из кода</h2>
+    <textarea id="tIn" rows="4" placeholder="Вставьте сюда код переноса"></textarea>
+    <button type="button" class="ghost" id="tLoad">Загрузить как новый автомобиль</button>
+    <p id="tMsg" class="hint" role="status"></p>
+  </details>
+</main>
+
+<script>
+(function(){
+  var KEY='auto-expenses-v1', items=[];
+  var $=function(id){return document.getElementById(id)};
+  try{var raw=localStorage.getItem(KEY); if(raw) items=JSON.parse(raw)||[];}catch(e){items=[];}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(items));}catch(e){}}
+  var OKEY='auto-odo-v1',IKEY='auto-intervals-v1',I2KEY='auto-intervals-v2',CKEY='auto-cars-v1',AKEY='auto-active-car-v1',MKEY='auto-months-v1',odo=[],oldIv=null,ivAll=null,ivMAll=null,cars=[],cid=null;
+  var DEF={'Замена масла и фильтра в двигателе':7500,'Замена масла и фильтра АКПП':40000,'Замена масла редукторов':40000,'Замена масла раздаточной коробки':40000,'Замена тормозных колодок':20000,'Шприцевание точек смазки':15000};
+  var DEFM={'Аккумулятор':36};
+  function copy(o){return JSON.parse(JSON.stringify(o));}
+  try{odo=JSON.parse(localStorage.getItem(OKEY))||[];}catch(e){odo=[];}
+  try{oldIv=JSON.parse(localStorage.getItem(IKEY));}catch(e){oldIv=null;}
+  try{ivAll=JSON.parse(localStorage.getItem(I2KEY));}catch(e){ivAll=null;}
+  try{cars=JSON.parse(localStorage.getItem(CKEY))||[];}catch(e){cars=[];}
+  try{ivMAll=JSON.parse(localStorage.getItem(MKEY));}catch(e){ivMAll=null;}
+  var tpl=null;
+  try{tpl=JSON.parse(localStorage.getItem('auto-template-v1'));}catch(e){tpl=null;}
+  if(!tpl||typeof tpl!=='object')tpl=null;
+  var custAll=null;
+  try{custAll=JSON.parse(localStorage.getItem('auto-custom-v1'));}catch(e){custAll=null;}
+  if(!custAll||typeof custAll!=='object')custAll={};
+  if(!Array.isArray(cars)||!cars.length)cars=[{id:1,name:'Мой автомобиль'}];
+  if(!ivAll||typeof ivAll!=='object'){ivAll={};ivAll[cars[0].id]=(oldIv&&typeof oldIv==='object')?oldIv:copy(DEF);}
+  if(!ivMAll||typeof ivMAll!=='object'){ivMAll={};cars.forEach(function(c){ivMAll[c.id]=copy(DEFM);});}
+  items.forEach(function(i){if(i.carId==null)i.carId=cars[0].id;});
+  odo.forEach(function(r){if(r.carId==null)r.carId=cars[0].id;});
+  try{cid=Number(localStorage.getItem(AKEY));}catch(e){cid=null;}
+  if(!cars.some(function(c){return c.id===cid}))cid=cars[0].id;
+  function carObj(){return cars.filter(function(c){return c.id===cid})[0]||cars[0];}
+  function mineItems(){return items.filter(function(i){return i.carId===cid});}
+  function tplIv(){return tpl&&tpl.iv&&typeof tpl.iv==='object'?tpl.iv:DEF;}
+  function tplMo(){return tpl&&tpl.ivm&&typeof tpl.ivm==='object'?tpl.ivm:DEFM;}
+  function ivC(){if(!ivAll[cid])ivAll[cid]=copy(tplIv());return ivAll[cid];}
+  function ivMC(){if(!ivMAll[cid])ivMAll[cid]=copy(tplMo());return ivMAll[cid];}
+  function custC(){if(!Array.isArray(custAll[cid]))custAll[cid]=[];return custAll[cid];}
+  var BASE_REM=['Замена масла и фильтра в двигателе','Замена воздушного фильтра','Замена салонного фильтра','Замена свечей зажигания','Замена тормозных колодок','Замена тормозной жидкости','Замена ГУР жидкости','Замена охлаждающей жидкости (антифриз)','Замена масла и фильтра АКПП','Замена масла редукторов','Замена масла раздаточной коробки','Шприцевание точек смазки','Шины и колёса','Аккумулятор'];
+  function custNames(){return custC().map(function(c){return c.name;});}
+  function buildSub(){
+    var v=$('sub').value,names=BASE_REM.concat(custNames(),['Другое']);
+    $('sub').innerHTML=names.map(function(k){return '<option>'+esc(k)+'</option>';}).join('');
+    if(names.indexOf(v)>=0)$('sub').value=v;
+  }
+  function migrateKinds(){
+    var MK='auto-kinds-v2';
+    try{if(localStorage.getItem(MK)==='1')return;}catch(e){}
+    var extra=[];
+    items.forEach(function(i){
+      var sb=i.sub,note=i.note||'';
+      if(sb==='Замена масла и фильтров'){i.sub='Замена масла и фильтра в двигателе';}
+      else if(sb==='Тормоза'){i.sub='Замена тормозных колодок';}
+      else if(sb==='Ходовая часть'){i.sub=/шприц/i.test(note)?'Шприцевание точек смазки':'Другое';}
+      else if(sb==='Диагностика'){i.sub='Другое';}
+      else if(sb==='Жидкости (тормозная, ГУР)'){i.sub=/гур/i.test(note)?'Замена ГУР жидкости':(/тормоз|dot/i.test(note)?'Замена тормозной жидкости':'Другое');}
+    });
+    items=items.concat(extra);
+    function remap(o,isKm){
+      Object.keys(o).forEach(function(k){
+        var nk=null,v=o[k];
+        if(k==='Замена масла и фильтров')nk='Замена масла и фильтра в двигателе';
+        else if(k==='Тормоза')nk='Замена тормозных колодок';
+        else if(k==='Ходовая часть'){nk='Шприцевание точек смазки';if(isKm&&v===40000)v=15000;}
+        else if(k==='Диагностика'){delete o[k];return;}
+        if(nk){delete o[k];if(o[nk]==null)o[nk]=v;}
+      });
+    }
+    Object.keys(ivAll).forEach(function(c){remap(ivAll[c],true);});
+    Object.keys(ivMAll).forEach(function(c){remap(ivMAll[c],false);});
+    save();saveX();
+    try{localStorage.setItem(MK,'1');}catch(e){}
+  }
+  migrateKinds();
+  var delArmed=false,carMode=null;
+  function migrateV3(){
+    var MK='auto-kinds-v3',T='Трансмиссия (АКПП, мосты)',A='Замена масла и фильтра АКПП',R='Замена масла редукторов и раздаточной коробки';
+    try{if(localStorage.getItem(MK)==='1')return;}catch(e){}
+    items.forEach(function(i){
+      if(i.sub===T){var n=i.note||'';i.sub=/atf|акпп/i.test(n)?A:(/мост|раздат|редуктор/i.test(n)?R:'Другое');}
+      if(typeof i.parts==='undefined'){i.parts=null;i.labor=null;i.oil=null;}
+    });
+    function remapT(o){if(o[T]!=null){if(o[A]==null)o[A]=o[T];if(o[R]==null)o[R]=o[T];delete o[T];}}
+    Object.keys(ivAll).forEach(function(c){remapT(ivAll[c]);});
+    Object.keys(ivMAll).forEach(function(c){remapT(ivMAll[c]);});
+    save();saveX();
+    try{localStorage.setItem(MK,'1');}catch(e){}
+  }
+  migrateV3();
+  function migrateV5(){
+    var MK='auto-kinds-v5',R='Замена масла редукторов и раздаточной коробки',RD='Замена масла редукторов',RZ='Замена масла раздаточной коробки';
+    try{if(localStorage.getItem(MK)==='1')return;}catch(e){}
+    var extra=[];
+    items.forEach(function(i){
+      if(i.sub===R){i.sub=RD;}
+    });
+    items=items.concat(extra);
+    items.forEach(function(i){
+      if(typeof i.partList==='undefined')i.partList=null;
+    });
+    function remapR(o){if(o[R]!=null){if(o[RD]==null)o[RD]=o[R];if(o[RZ]==null)o[RZ]=o[R];delete o[R];}}
+    Object.keys(ivAll).forEach(function(c){remapR(ivAll[c]);});
+    Object.keys(ivMAll).forEach(function(c){remapR(ivMAll[c]);});
+    save();saveX();
+    try{localStorage.setItem(MK,'1');}catch(e){}
+  }
+  migrateV5();
+  function migrateV6(){
+    var MK='auto-kinds-v6';
+    try{if(localStorage.getItem(MK)==='1')return;}catch(e){}
+    items.forEach(function(i){
+      if(i.oil){
+        var pl=Array.isArray(i.partList)?i.partList:[];
+        pl.unshift({name:String(i.oil),cost:null});
+        i.partList=pl;i.oil=null;
+      }
+    });
+    save();
+    try{localStorage.setItem(MK,'1');}catch(e){}
+  }
+  migrateV6();
+  function migrateV7(){
+    var MK='auto-kinds-v7';
+    try{if(localStorage.getItem(MK)==='1')return;}catch(e){}
+    items.forEach(function(i){if(i.sub==='Техосмотр')i.sub='Другое';});
+    Object.keys(ivAll).forEach(function(c){delete ivAll[c]['Техосмотр'];});
+    Object.keys(ivMAll).forEach(function(c){delete ivMAll[c]['Техосмотр'];});
+    save();saveX();
+    try{localStorage.setItem(MK,'1');}catch(e){}
+  }
+  migrateV7();
+  function renderCars(){
+    $('car').innerHTML=cars.map(function(c){return '<option value="'+c.id+'"'+(c.id===cid?' selected':'')+'>'+esc(c.name)+'</option>';}).join('');
+    $('carDel').hidden=cars.length<2;delArmed=false;$('carDel').textContent='Удалить';
+  }
+  function saveX(){try{localStorage.setItem(OKEY,JSON.stringify(odo));localStorage.setItem(I2KEY,JSON.stringify(ivAll));localStorage.setItem(MKEY,JSON.stringify(ivMAll));localStorage.setItem('auto-custom-v1',JSON.stringify(custAll));localStorage.setItem(CKEY,JSON.stringify(cars));localStorage.setItem(AKEY,String(cid));}catch(e){}}
+  function readings(){return mineItems().filter(function(i){return i.km!=null}).map(function(i){return {id:i.id,km:i.km}}).concat(odo.filter(function(r){return r.carId===cid}));}
+  function renderRem(cur){
+    var cu=custC(),kinds=BASE_REM.concat(custNames());
+    var iv=ivC(),ivm=ivMC(),its=mineItems();
+    var now=new Date();now.setHours(0,0,0,0);
+    $('rem').innerHTML=kinds.map(function(k){
+      var last=null,lastD=null;
+      its.forEach(function(i){
+        if(i.sub!==k)return;
+        if(i.km!=null&&(last==null||i.km>last))last=i.km;
+        if(i.date&&(lastD==null||i.date>lastD))lastD=i.date;
+      });
+      var cdef=cu.filter(function(c){return c.name===k;})[0];
+      if(cdef){
+        if(cdef.lastKm!=null&&(last==null||cdef.lastKm>last))last=cdef.lastKm;
+        if(cdef.lastDate&&(lastD==null||cdef.lastDate>lastD))lastD=cdef.lastDate;
+      }
+      var n=parseFloat(iv[k]),m=parseFloat(ivm[k]),parts=[],lvl=0;
+      if(n>0&&last!=null&&cur!=null){
+        var left=last+n-cur,l=0,t;
+        if(left<=0){t='Просрочено на '+fmt.format(Math.round(-left))+' км';l=2;}
+        else if(left<=1000){t='Скоро: через '+fmt.format(Math.round(left))+' км';l=1;}
+        else{t='Через '+fmt.format(Math.round(left))+' км (на '+fmt.format(last+n)+' км)';}
+        parts.push(t);lvl=Math.max(lvl,l);
+      }
+      if(m>0&&lastD){
+        var p=lastD.split('-'),due=new Date(+p[0],+p[1]-1+Math.round(m),+p[2]);
+        var days=Math.round((due-now)/86400000),l2=0,t2;
+        var iso=due.getFullYear()+'-'+('0'+(due.getMonth()+1)).slice(-2)+'-'+('0'+due.getDate()).slice(-2);
+        if(days<=0){t2='Просрочено на '+(-days)+' дн.';l2=2;}
+        else if(days<=30){t2='Скоро: через '+days+' дн. (до '+dateRu(iso)+')';l2=1;}
+        else{t2='До '+dateRu(iso);}
+        parts.push(t2);lvl=Math.max(lvl,l2);
+      }
+      var st,cls=lvl===2?'st-over':(lvl===1?'st-soon':'');
+      if(parts.length)st=parts.join(' · ');
+      else if(n>0||m>0)st='Нет записи: добавьте последнее обслуживание, и отсчёт начнётся';
+      else st='Напоминание выключено';
+      return '<li><div class="what"><b>'+esc(k)+'</b><span class="'+cls+'">'+st+'</span></div>'+
+        '<div class="ivs"><label class="iv">каждые <input type="number" inputmode="numeric" min="0" step="500" data-k="'+esc(k)+'" data-t="km" value="'+(n>0?n:'')+'" placeholder="км" aria-label="Интервал в километрах: '+esc(k)+'"> км</label>'+
+        '<label class="iv">или <input type="number" inputmode="numeric" min="0" step="1" data-k="'+esc(k)+'" data-t="mo" value="'+(m>0?m:'')+'" placeholder="мес." aria-label="Интервал в месяцах: '+esc(k)+'"> мес.</label>'+(cdef?'<button type="button" class="del" data-delrem="'+esc(k)+'" aria-label="Удалить напоминание: '+esc(k)+'">Удалить</button>':'')+'</div></li>';
+    }).join('');
+  }
+  function renderBanner(rd,cur){
+    var last=rd.reduce(function(m,r){return Math.max(m,r.id)},0);
+    var days=last?Math.floor((Date.now()-last)/86400000):null;
+    var show=last===0||days>=7,nm=carObj().name;
+    $('kmBanner').hidden=!show;
+    $('kmNow').min=cur!=null?cur:0;
+    if(show)$('kmBannerText').textContent=last===0?'«'+nm+'»: введите текущий пробег, от него считаются напоминания.':'«'+nm+'»: пробег не обновлялся '+days+' дн. Введите показания одометра.';
+  }
+  var fmt=new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2});
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function dateRu(d){var p=d.split('-');return p.length===3?p[2]+'.'+p[1]+'.'+p[0]:d}
+  $('date').value=new Date().toISOString().slice(0,10);
+  var MAINT='Тех. обслуживание',REPAIR='Ремонт';
+  var prow=[{n:'',c:''}];
+  function renderRows(){
+    $('partRows').innerHTML=prow.map(function(r,i){
+      return '<div class="prow"><input type="text" maxlength="80" data-r="'+i+'" data-f="n" value="'+esc(r.n)+'" placeholder="Тип / наименование" aria-label="Запчасть: тип или наименование">'+
+        '<input type="number" inputmode="decimal" min="0" step="any" data-r="'+i+'" data-f="c" value="'+esc(r.c)+'" placeholder="₸" aria-label="Стоимость запчасти">'+
+        '<button type="button" class="del" data-del="'+i+'" aria-label="Убрать запчасть">×</button></div>';
+    }).join('');
+  }
+  function cleanRows(){
+    return prow.map(function(r){var c=parseFloat(r.c);return {name:String(r.n||'').trim(),cost:isNaN(c)?null:c};})
+      .filter(function(p){return p.name||p.cost!=null;})
+      .map(function(p){return {name:p.name||'Запчасть',cost:p.cost};});
+  }
+  function rowsSum(a){return a.reduce(function(t,p){return t+(p.cost>0?p.cost:0);},0);}
+  renderRows();
+  function updateForm(){
+    var c=$('cat').value,fuel=c==='Топливо',main=c===MAINT;
+    $('subWrap').hidden=!main;
+    $('amountWrap').hidden=!fuel;$('amount').required=fuel;
+    $('partsWrap').hidden=fuel;$('laborWrap').hidden=fuel;
+    $('partsBox').hidden=fuel;
+    $('titleWrap').hidden=!((main&&$('sub').value==='Другое')||c===REPAIR);
+    $('title').required=(c===REPAIR);
+    $('titleLabel').textContent=c===REPAIR?'Название или описание ремонта':'Название или описание работы (необязательно)';
+    $('title').placeholder=c===REPAIR?'например, замена лобового стекла':'например, замена лампы ближнего света';
+    if(c===REPAIR){
+      $('partsTitle').textContent='Запчасти (необязательно)';
+      $('partsHint').textContent='Например: рычаг передний левый, 25 000 ₸. Если общую стоимость ниже оставить пустой, она посчитается по этим строкам.';
+    }else{
+      $('partsTitle').textContent='Технические жидкости / Расходные материалы (необязательно)';
+      $('partsHint').textContent='Например: масло Shell Helix Ultra 5W-30, 4 л, 18 000 ₸; фильтр MD352626, 2 000 ₸. Если общую стоимость ниже оставить пустой, она посчитается по этим строкам.';
+    }
+    if(fuel){$('noteLabel').textContent='Заметка (необязательно)';$('note').placeholder='например, АЗС и марка бензина';}
+    else{$('noteLabel').textContent='СТО, мастер и телефон (необязательно)';$('note').placeholder='например, СТО «Автомир», Ерлан, +7 701 000 00 00';}
+  }
+  $('cat').addEventListener('change',updateForm);
+  $('sub').addEventListener('change',updateForm);
+  updateForm();
+
+  var per='all';
+  var MONTHS=['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+  function periodLabel(v){
+    if(v==='all')return 'всё время';
+    var p=v.split(':');
+    if(p[0]==='y')return p[1]+' год';
+    var d=p[1].split('-');
+    return MONTHS[+d[1]-1]+' '+d[0];
+  }
+  function fillPeriod(all){
+    var ys={},ms={},now=new Date();
+    all.forEach(function(i){if(i.date){ys[i.date.slice(0,4)]=1;ms[i.date.slice(0,7)]=1;}});
+    var cy=String(now.getFullYear()),cm=cy+'-'+('0'+(now.getMonth()+1)).slice(-2);
+    ys[cy]=1;ms[cm]=1;
+    var yk=Object.keys(ys).sort().reverse(),mk=Object.keys(ms).sort().reverse();
+    var valid=['all'].concat(yk.map(function(y){return 'y:'+y}),mk.map(function(m){return 'm:'+m}));
+    if(valid.indexOf(per)<0)per='all';
+    function cap(t){return t.charAt(0).toUpperCase()+t.slice(1);}
+    $('period').innerHTML='<option value="all">Всё время</option>'+
+      '<optgroup label="По годам">'+yk.map(function(y){return '<option value="y:'+y+'">'+y+' год</option>'}).join('')+'</optgroup>'+
+      '<optgroup label="По месяцам">'+mk.map(function(m){return '<option value="m:'+m+'">'+cap(periodLabel('m:'+m))+'</option>'}).join('')+'</optgroup>';
+    $('period').value=per;
+  }
+  function filterPeriod(all){
+    if(per==='all')return all;
+    var pre=per.split(':')[1];
+    return all.filter(function(i){return i.date&&i.date.indexOf(pre)===0;});
+  }
+  function kindLabel(i){
+    if(!i.title)return i.sub||'';
+    if(i.cat==='Ремонт'&&i.sub&&i.sub!=='Прочий ремонт')return i.sub+' — '+i.title;
+    return i.title;
+  }
+  function plabel(i){return i.cat==='Ремонт'?'запчасти':'жидкости и материалы';}
+  function plist(i){
+    var a=(i.partList||[]).map(function(p){return esc(p.name)+(p.cost>0?' — '+fmt.format(p.cost)+' ₸':'');});
+    return a.length?' · '+plabel(i)+': '+a.join('; '):'';
+  }
+  function brk(i){
+    var a=[];
+    if(i.parts>0)a.push('запчасти и материалы '+fmt.format(i.parts)+' ₸');
+    if(i.labor>0)a.push('услуги '+fmt.format(i.labor)+' ₸');
+    return a.length?' · '+a.join(', '):'';
+  }
+  function render(){
+    renderCars();
+    buildSub();
+    var all=mineItems();
+    fillPeriod(all);
+    var its=filterPeriod(all);
+    $('totalLabel').textContent=per==='all'?'Всего потрачено':'Потрачено: '+periodLabel(per);
+    var total=its.reduce(function(s,i){return s+i.amount},0);
+    $('total').textContent=fmt.format(total)+' ₸';
+    var rd=readings(),kms=rd.map(function(r){return r.km});
+    var cur=kms.length?Math.max.apply(null,kms):null;
+    $('odo').textContent=cur!=null?'Пробег: '+fmt.format(cur)+' км':'';
+    renderRem(cur);renderBanner(rd,cur);
+    var by={};its.forEach(function(i){by[i.cat]=(by[i.cat]||0)+i.amount});
+    var rows=Object.keys(by).sort(function(a,b){return by[b]-by[a]});
+    $('cats').innerHTML=rows.map(function(c){
+      var pct=total?Math.round(by[c]/total*100):0;
+      return '<li><span>'+esc(c)+'</span><span class="bar"><i style="width:'+pct+'%"></i></span><span>'+fmt.format(by[c])+' ₸</span></li>';
+    }).join('');
+    var sorted=its.slice().sort(function(a,b){return b.date.localeCompare(a.date)||b.id-a.id});
+    $('list').innerHTML=sorted.length?sorted.map(function(i){
+      return '<li><div class="what"><b>'+esc(i.cat)+(kindLabel(i)?': '+esc(kindLabel(i)):'')+'</b><span>'+dateRu(i.date)+(i.km!=null?' · '+fmt.format(i.km)+' км':'')+brk(i)+plist(i)+(i.note?' · '+esc(i.note):'')+'</span></div>'+
+        '<span class="sum">'+fmt.format(i.amount)+' ₸</span>'+
+        '<button class="del" data-id="'+i.id+'" aria-label="Удалить расход">Удалить</button></li>';
+    }).join(''):'<li class="empty">'+(all.length?'За этот период расходов нет.':'Пока пусто. Добавьте первый расход в форме выше.')+'</li>';
+  }
+
+  $('f').addEventListener('submit',function(e){
+    e.preventDefault();
+    var c=$('cat').value,fuel=c==='Топливо',amount,parts=null,labor=null,rows=(fuel||$('partsBox').hidden)?[]:cleanRows();
+    if(fuel){amount=parseFloat($('amount').value);if(!(amount>=0))return;}
+    else{
+      parts=parseFloat($('parts').value);labor=parseFloat($('labor').value);
+      if(isNaN(parts))parts=rowsSum(rows);
+      if(isNaN(labor))labor=0;
+      amount=parts+labor;
+      if(!(amount>0)){$('parts').setCustomValidity('Укажите стоимость запчастей или услуг');$('parts').reportValidity();return;}
+    }
+    var km=parseFloat($('km').value);
+    var sub=c===MAINT?$('sub').value:null;
+    items.push({id:Date.now(),carId:cid,cat:c,sub:sub,amount:amount,parts:parts,labor:labor,oil:null,title:(((c===MAINT&&sub==='Другое')||c===REPAIR)&&$('title').value.trim())?$('title').value.trim():null,partList:rows.length?rows:null,date:$('date').value,km:isNaN(km)?null:km,note:$('note').value.trim()});
+    save();
+    $('amount').value='';$('parts').value='';$('labor').value='';$('title').value='';$('km').value='';$('note').value='';
+    prow=[{n:'',c:''}];renderRows();
+    render();
+  });
+  $('parts').addEventListener('input',function(){$('parts').setCustomValidity('');});
+  $('partRows').addEventListener('input',function(e){
+    var i=e.target.getAttribute('data-r');if(i==null)return;
+    prow[+i][e.target.getAttribute('data-f')]=e.target.value;
+  });
+  $('partRows').addEventListener('click',function(e){
+    var b=e.target.closest('[data-del]');if(!b)return;
+    prow.splice(+b.getAttribute('data-del'),1);
+    if(!prow.length)prow=[{n:'',c:''}];
+    renderRows();
+  });
+  $('partAdd').addEventListener('click',function(){prow.push({n:'',c:''});renderRows();});
+  $('list').addEventListener('click',function(e){
+    var b=e.target.closest('.del');if(!b)return;
+    var id=Number(b.getAttribute('data-id'));
+    items=items.filter(function(i){return i.id!==id});save();render();
+  });
+  function tMsg(t){$('tMsg').textContent=t;}
+  function showOut(t){$('tOut').value=t;$('tOut').hidden=false;$('tCopy').hidden=false;tMsg('');}
+  $('tHist').addEventListener('click',function(){
+    var sums=$('withSums').checked,c=carObj();
+    var its=mineItems().filter(function(i){return i.cat!=='Топливо';}).sort(function(a,b){return String(a.date).localeCompare(String(b.date))||a.id-b.id;});
+    var kms=readings().map(function(r){return r.km;});
+    var lines=[c.name,'История обслуживания и ремонта'+(kms.length?', пробег '+fmt.format(Math.max.apply(null,kms))+' км':''),''];
+    its.forEach(function(i){
+      var x=[];
+      if(i.partList&&i.partList.length)x.push(plabel(i)+': '+i.partList.map(function(p){return p.name+(sums&&p.cost>0?' '+fmt.format(p.cost)+' ₸':'');}).join(', '));
+      if(i.note)x.push(i.note);
+      lines.push('• '+dateRu(i.date)+(i.km!=null?', '+fmt.format(i.km)+' км':'')+': '+(kindLabel(i)||i.cat)+(x.length?' ('+x.join('; ')+')':'')+(sums?', '+fmt.format(i.amount)+' ₸':''));
+    });
+    if(!its.length)lines.push('Записей пока нет.');
+    showOut(lines.join('\n'));
+  });
+  $('tCode').addEventListener('click',function(){
+    var o={app:'auto-tracker',v:1,name:carObj().name,items:mineItems(),odo:odo.filter(function(r){return r.carId===cid;}),iv:ivC(),ivm:ivMC(),cust:custC()};
+    showOut(JSON.stringify(o));
+  });
+  $('tCopy').addEventListener('click',function(){
+    var t=$('tOut');t.focus();t.select();
+    var ok=false;
+    try{ok=document.execCommand('copy');}catch(e){ok=false;}
+    tMsg(ok?'Скопировано.':'Текст выделен, скопируйте его вручную.');
+  });
+  $('tLoad').addEventListener('click',function(){
+    var o=null;
+    try{o=JSON.parse($('tIn').value.trim());}catch(e){o=null;}
+    if(!o||o.app!=='auto-tracker'||!Array.isArray(o.items)){tMsg('Не получилось прочитать код. Вставьте его целиком, без изменений.');return;}
+    function num(v){v=parseFloat(v);return isNaN(v)?null:v;}
+    function txt(v,n){return v==null?null:String(v).slice(0,n);}
+    function cleanCust(a){
+      return Array.isArray(a)?a.filter(function(x){return x&&x.name;}).map(function(x){
+        var d=x.lastDate&&/^\d{4}-\d{2}-\d{2}$/.test(String(x.lastDate))?String(x.lastDate):null;
+        return {name:txt(x.name,40),lastDate:d,lastKm:num(x.lastKm)};
+      }):[];
+    }
+    function cleanPl(a,legacyOil){
+      var out=Array.isArray(a)?a.filter(function(p){return p&&p.name;}).map(function(p){return {name:txt(p.name,80),cost:num(p.cost)};}):[];
+      if(legacyOil)out.unshift({name:txt(legacyOil,80),cost:null});
+      return out.length?out:null;
+    }
+    var c={id:Date.now(),name:txt(o.name,30)||'Импортированный автомобиль'},base=Date.now()+1,added=0;
+    o.items.forEach(function(r,n){
+      var amount=num(r&&r.amount);
+      if(amount==null||!/^\d{4}-\d{2}-\d{2}$/.test(String(r.date)))return;
+      items.push({id:base+n,carId:c.id,cat:txt(r.cat,40)||MAINT,sub:txt(r.sub,60),amount:amount,parts:num(r.parts),labor:num(r.labor),oil:null,title:txt(r.title,60),partList:cleanPl(r.partList,r.oil),date:String(r.date),km:num(r.km),note:txt(r.note,300)||''});
+      added++;
+    });
+    (Array.isArray(o.odo)?o.odo:[]).forEach(function(r,n){var k=num(r&&r.km);if(k!=null)odo.push({id:base+500000+n,carId:c.id,km:k});});
+    function cleanIv(src){var out={};if(src&&typeof src==='object')Object.keys(src).forEach(function(k){var v=num(src[k]);if(v>0)out[String(k)]=v;});return out;}
+    cars.push(c);ivAll[c.id]=cleanIv(o.iv);ivMAll[c.id]=cleanIv(o.ivm);custAll[c.id]=cleanCust(o.cust);
+    cid=c.id;save();saveX();$('tIn').value='';render();
+    tMsg('Загружен автомобиль «'+c.name+'»: записей '+added+'.');
+  });
+  $('tplSave').addEventListener('click',function(){
+    var t={iv:copy(ivC()),ivm:copy(ivMC())};
+    custNames().forEach(function(n){delete t.iv[n];delete t.ivm[n];});
+    tpl=t;
+    try{localStorage.setItem('auto-template-v1',JSON.stringify(tpl));}catch(e){}
+    $('tplMsg').textContent='Готово: новые автомобили будут получать интервалы машины «'+carObj().name+'». Свои напоминания в стандартные не входят.';
+  });
+  $('remAdd').addEventListener('click',function(){
+    $('remForm').hidden=!$('remForm').hidden;$('remMsg').textContent='';
+    if(!$('remForm').hidden)$('remName').focus();
+  });
+  $('remForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    var n=$('remName').value.trim().slice(0,40);
+    var km=parseFloat($('remKm').value),mo=parseFloat($('remMo').value),lk=parseFloat($('remLastKm').value);
+    if(!n)return;
+    if(!(km>0)&&!(mo>0)){$('remMsg').textContent='Укажите интервал: в километрах или в месяцах.';return;}
+    var taken=BASE_REM.concat(custNames(),['Другое']).some(function(x){return x.toLowerCase()===n.toLowerCase();});
+    if(taken){$('remMsg').textContent='Напоминание с таким названием уже есть.';return;}
+    custC().push({name:n,lastDate:$('remDate').value||null,lastKm:isNaN(lk)?null:lk});
+    if(km>0)ivC()[n]=km;
+    if(mo>0)ivMC()[n]=mo;
+    $('remName').value='';$('remKm').value='';$('remMo').value='';$('remDate').value='';$('remLastKm').value='';$('remMsg').textContent='';
+    $('remForm').hidden=true;
+    saveX();render();
+  });
+  $('rem').addEventListener('click',function(e){
+    var b=e.target.closest('[data-delrem]');if(!b)return;
+    var n=b.getAttribute('data-delrem'),l=custC();
+    for(var j=l.length-1;j>=0;j--){if(l[j].name===n)l.splice(j,1);}
+    delete ivC()[n];delete ivMC()[n];
+    saveX();render();
+  });
+  $('period').addEventListener('change',function(){per=$('period').value;render();});
+  $('car').addEventListener('change',function(){cid=Number($('car').value);saveX();render();});
+  $('carAdd').addEventListener('click',function(){carMode='add';$('carName').value='';$('carForm').hidden=false;$('carName').focus();});
+  $('carRen').addEventListener('click',function(){carMode='ren';$('carName').value=carObj().name;$('carForm').hidden=false;$('carName').focus();});
+  $('carForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    var n=$('carName').value.trim();if(!n)return;
+    if(carMode==='add'){var c={id:Date.now(),name:n};cars.push(c);cid=c.id;ivAll[cid]=copy(tplIv());ivMAll[cid]=copy(tplMo());}
+    else{carObj().name=n;}
+    $('carForm').hidden=true;saveX();render();
+  });
+  $('carDel').addEventListener('click',function(){
+    if(cars.length<2)return;
+    if(!delArmed){delArmed=true;$('carDel').textContent='Удалить вместе с данными? Нажмите ещё раз';return;}
+    var id=cid;
+    items=items.filter(function(i){return i.carId!==id});
+    odo=odo.filter(function(r){return r.carId!==id});
+    delete ivAll[id];delete ivMAll[id];delete custAll[id];
+    cars=cars.filter(function(c){return c.id!==id});
+    cid=cars[0].id;
+    save();saveX();render();
+  });
+  $('kmBanner').addEventListener('submit',function(e){
+    e.preventDefault();
+    var v=parseFloat($('kmNow').value);
+    if(!(v>=0))return;
+    odo.push({id:Date.now(),carId:cid,km:v});saveX();$('kmNow').value='';render();
+  });
+  $('rem').addEventListener('change',function(e){
+    var k=e.target.getAttribute('data-k');if(!k)return;
+    var v=parseFloat(e.target.value);
+    var iv=e.target.getAttribute('data-t')==='mo'?ivMC():ivC();
+    if(v>0)iv[k]=v;else delete iv[k];
+    saveX();render();
+  });
+  render();
+})();
+</script>
+</body>
+</html>
